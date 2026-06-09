@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+
+  postgres-db:
+    image: postgres:16
+    container_name: postgres-db
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: Testing
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Testing"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  employee-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: employee-api
+    restart: always
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+    ports:
+      - "5000:8080"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultPostgreSqlConnection: "User ID=postgres;Password=root;Host=3.110.55.230;Port=5432;Database=Testing;Pooling=true;"
+
+volumes:
+  postgres-data:
