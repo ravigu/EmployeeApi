@@ -1,4 +1,6 @@
 using EmployeeApi.Data;
+using EmployeeApi.Interfaces;
+using EmployeeApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultPostgreSqlConnection"));
 });
 builder.Services.AddHealthChecks();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
