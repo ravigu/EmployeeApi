@@ -1,6 +1,8 @@
-﻿using EmployeeApi.Application.Interfaces;
+﻿using EmployeeApi.Application.Features.Auth.Commands;
+using EmployeeApi.Application.Interfaces;
 using EmployeeApi.Domain.Entities;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +14,14 @@ namespace EmployeeApi.Application.Features.Employees.Commands
     public class CreateEmployeeHandler : IRequestHandler< CreateEmployeeCommand, Guid>
     {
         private readonly IEmployeeRepository _repository;
+        private readonly ICacheService _cacheService;
+        private readonly ILogger<CreateEmployeeHandler> _logger;
 
-        public CreateEmployeeHandler( IEmployeeRepository repository)
+        public CreateEmployeeHandler( IEmployeeRepository repository , ICacheService cacheService , ILogger<CreateEmployeeHandler> logger)
         {
             _repository = repository;
+            _cacheService = cacheService;
+            _logger = logger;
         }
 
         public async Task<Guid> Handle(CreateEmployeeCommand request,CancellationToken cancellationToken)
@@ -25,7 +31,9 @@ namespace EmployeeApi.Application.Features.Employees.Commands
                 request.Email);
 
             await _repository.AddAsync(employee);
+            _logger.LogInformation("Employee {Name} created successfully", employee.Name);
 
+            await _cacheService.RemoveAsync("employees");
             return employee.Id;
         }
     }

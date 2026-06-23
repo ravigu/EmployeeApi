@@ -17,5 +17,6 @@ namespace EmployeeApi.Infrastructure.Data
         }
 
         public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<User> Users =>Set<User>();
     }
 }

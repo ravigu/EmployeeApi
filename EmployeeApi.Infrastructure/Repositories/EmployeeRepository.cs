@@ -1,4 +1,5 @@
-﻿using EmployeeApi.Application.Interfaces;
+﻿using EmployeeApi.Application.Common.Models;
+using EmployeeApi.Application.Interfaces;
 using EmployeeApi.Domain.Entities;
 using EmployeeApi.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,11 +21,68 @@ namespace EmployeeApi.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Employee>> GetAllAsync()
-        {
-            return await _context.Employees.ToListAsync();
-        }
+        /* public async Task<List<Employee>> GetAllAsync()
+         {
+             return await _context.Employees.ToListAsync();
+         }
+ */
+        /* public async Task<List<Employee>> GetAllAsync(EmployeeQueryParameters parameters)
+         {
+             IQueryable<Employee> query = _context.Employees;
 
+             // Search
+             if (!string.IsNullOrWhiteSpace(parameters.Search))
+             {
+                 query = query.Where(x =>x.Name.ToLower().Contains(parameters.Search.ToLower()));
+             }
+
+             // Sorting
+             query = parameters.Descending?query.OrderByDescending(x => x.Name): query.OrderBy(x => x.Name);
+
+             // Pagination
+             query = query.Skip((parameters.PageNumber - 1) * parameters.PageSize).Take(parameters.PageSize);
+
+             return await query.ToListAsync();
+         }*/
+
+        public async Task<PagedResponse<Employee>> GetAllAsync(
+    EmployeeQueryParameters parameters)
+        {
+            IQueryable<Employee> query = _context.Employees;
+
+            // Search
+            if (!string.IsNullOrWhiteSpace(parameters.Search))
+            {
+                query = query.Where(x =>
+                    x.Name.ToLower()
+                     .Contains(parameters.Search.ToLower()));
+            }
+
+            // Sorting
+            query = parameters.Descending
+                ? query.OrderByDescending(x => x.Name)
+                : query.OrderBy(x => x.Name);
+
+            // Total records before paging
+            var totalRecords = await query.CountAsync();
+
+            // Paging
+            var employees = await query
+                .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+                .Take(parameters.PageSize)
+                .ToListAsync();
+
+            return new PagedResponse<Employee>
+            {
+                PageNumber = parameters.PageNumber,
+                PageSize = parameters.PageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(
+                    totalRecords / (double)parameters.PageSize),
+
+                Items = employees
+            };
+        }
         public async Task<Employee?> GetByIdAsync(Guid id)
         {
             return await _context.Employees

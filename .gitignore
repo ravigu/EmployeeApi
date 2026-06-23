@@ -1,0 +1,24 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+
+# Logs
+Logs/
+*.log
+
+# User files
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Docker volumes
+postgres-data/
+
+# Publish folder
+publish/
+
+# Environment files
+.env

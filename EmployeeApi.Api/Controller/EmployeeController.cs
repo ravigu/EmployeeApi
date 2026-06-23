@@ -1,16 +1,26 @@
-﻿using EmployeeApi.Application.DTOs;
+﻿using Asp.Versioning;
+using EmployeeApi.Application.Common;
+using EmployeeApi.Application.Common.Models;
+using EmployeeApi.Application.DTOs;
 using EmployeeApi.Application.Features.Employees.Commands;
 using EmployeeApi.Application.Features.Employees.Queries.GetEmployees;
 using EmployeeApi.Application.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace EmployeeApi.Api.Controller
 {
+    [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [EnableRateLimiting("fixed")]
+    [ApiVersion("1.0")]
+    [ApiExplorerSettings(GroupName = "v1")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class EmployeesController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -31,11 +41,16 @@ namespace EmployeeApi.Api.Controller
         //}
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] EmployeeQueryParameters parameters)
         {
-            var result = await _mediator.Send(new GetEmployeesQuery());
+            var result = await _mediator.Send( new GetEmployeesQuery(parameters));
 
-            return Ok(result);
+            return Ok( new ApiResponse<PagedResponse<EmployeeDto>>
+                (
+                    true,
+                    "Employees fetched successfully",
+                    result
+                ));
         }
         /*
                 [HttpGet("{id:guid}")]
@@ -71,6 +86,7 @@ namespace EmployeeApi.Api.Controller
             return Ok();
         }*/
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateE(CreateEmployeeDto request)
         {
@@ -82,6 +98,7 @@ namespace EmployeeApi.Api.Controller
             return Ok(id);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(  Guid id,UpdateEmployeeDto request)
         {
@@ -93,6 +110,7 @@ namespace EmployeeApi.Api.Controller
         }
 
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete( Guid id)
         {
@@ -104,7 +122,17 @@ namespace EmployeeApi.Api.Controller
             return NoContent();
         }
 
-      
+        [Authorize]
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            return Ok(new
+            {
+                UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                Username = User.Identity?.Name,
+                Role = User.FindFirst(ClaimTypes.Role)?.Value
+            });
+        }
     }
 
 

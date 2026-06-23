@@ -1,4 +1,5 @@
-﻿using EmployeeApi.Application.DTOs;
+﻿using EmployeeApi.Application.Common.Models;
+using EmployeeApi.Application.DTOs;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,5 +9,7 @@ using System.Threading.Tasks;
 
 namespace EmployeeApi.Application.Features.Employees.Queries.GetEmployees
 {
-    public record GetEmployeesQuery(): IRequest<List<EmployeeDto>>;
+    public record GetEmployeesQuery( EmployeeQueryParameters Parameters) : IRequest<PagedResponse<EmployeeDto>>;
+
+
 }
